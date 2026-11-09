@@ -1,0 +1,45 @@
+allprojects {
+    group = 'co.com.nequi'
+    version = '1.0.0'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    dependencies {
+        compileOnly "org.projectlombok:lombok:${lombokVersion}"
+        annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+        testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+        testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+        testImplementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testImplementation 'org.mockito:mockito-core'
+        testImplementation 'org.mockito:mockito-junit-jupiter'
+        testImplementation 'io.projectreactor:reactor-test'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+    test {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport
+    }
+
+    jacocoTestReport {
+        dependsOn test
+        reports {
+            xml.required = true
+            html.required = true
+        }
+    }
+}

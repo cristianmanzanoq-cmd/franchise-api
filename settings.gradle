@@ -1,0 +1,20 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'franchise-api'
+
+include ':model'
+include ':usecase'
+include ':mongo-repository'
+include ':reactive-web'
+include ':app-service'
+
+project(':model').projectDir = file('./domain/model')
+project(':usecase').projectDir = file('./domain/usecase')
+project(':mongo-repository').projectDir = file('./infrastructure/driven-adapters/mongo-repository')
+project(':reactive-web').projectDir = file('./infrastructure/entry-points/reactive-web')
+project(':app-service').projectDir = file('./applications/app-service')
