@@ -1,0 +1,452 @@
+{
+  "info": {
+    "name": "Franchise API - MiniStack (ECS + ALB)",
+    "description": "Tests the API deployed on ECS Fargate behind an ALB, simulated by MiniStack.\n\nRequests go to MiniStack on localhost:4566. MiniStack routes them to the ALB by the Host header, so every request sends `Host: {{albHost}}` (set at collection level).\n\nRun the folders in order with the Collection Runner: the ids are saved in collection variables.\n\nPrerequisites: MiniStack running, the dev stack applied with Terraform, and the image pushed as described in the README.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4566" },
+    { "key": "albHost", "value": "franchise-api-dev-alb-4dpfseo1.us-east-1.elb.amazonaws.com" },
+    { "key": "franchiseId", "value": "" },
+    { "key": "branchId", "value": "" },
+    { "key": "secondBranchId", "value": "" },
+    { "key": "productId", "value": "" },
+    { "key": "secondProductId", "value": "" },
+    { "key": "thirdProductId", "value": "" }
+  ],
+  "header": [
+    { "key": "Content-Type", "value": "application/json" }
+  ],
+  "item": [
+    {
+      "name": "0. Health",
+      "item": [
+        {
+          "name": "Health check through ALB",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Service is UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/actuator/health",
+            "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Franchises",
+      "item": [
+        {
+          "name": "Create franchise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Returns id and name', () => {",
+                  "    pm.expect(body.id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.name).to.eql('Nequi Stores');",
+                  "});",
+                  "pm.collectionVariables.set('franchiseId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Nequi Stores\"\n}" },
+                        "url": "{{baseUrl}}/api/v1/franchises",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Update franchise name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Name updated', () => pm.expect(pm.response.json().name).to.eql('Nequi Stores Colombia'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Nequi Stores Colombia\"\n}" },
+            "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/name",
+            "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Branches",
+      "item": [
+        {
+          "name": "Add branch to franchise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Belongs to the franchise', () => pm.expect(body.franchiseId).to.eql(pm.collectionVariables.get('franchiseId')));",
+                  "pm.collectionVariables.set('branchId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Medellin Branch\"\n}" },
+                        "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Add second branch to franchise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('secondBranchId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Bogota Branch\"\n}" },
+                        "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Update branch name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Name updated', () => pm.expect(pm.response.json().name).to.eql('Medellin Downtown Branch'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Medellin Downtown Branch\"\n}" },
+            "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches/{{branchId}}/name",
+            "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Products",
+      "item": [
+        {
+          "name": "Add product to branch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('productId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Coffee Bag 500g\",\n  \"stock\": 10\n}" },
+                        "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches/{{branchId}}/products",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Add second product to branch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('secondProductId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Chocolate Bar\",\n  \"stock\": 50\n}" },
+                        "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches/{{branchId}}/products",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Add product to second branch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('thirdProductId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tea Box\",\n  \"stock\": 5\n}" },
+                        "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches/{{secondBranchId}}/products",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Update product stock",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Stock updated', () => pm.expect(pm.response.json().stock).to.eql(99));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "body": { "mode": "raw", "raw": "{\n  \"stock\": 99\n}" },
+                        "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches/{{branchId}}/products/{{productId}}/stock",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Update product name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Name updated', () => pm.expect(pm.response.json().name).to.eql('Coffee Bag 1kg'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Coffee Bag 1kg\"\n}" },
+            "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches/{{branchId}}/products/{{productId}}/name",
+            "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Top stock",
+      "item": [
+        {
+          "name": "Top-stock product per branch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns one entry per branch', () => pm.expect(pm.response.json().length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+                              "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/products/top-stock",
+                              "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Delete product from second branch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches/{{secondBranchId}}/products/{{thirdProductId}}",
+            "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Top-stock after delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+                              "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/products/top-stock",
+                              "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Error cases",
+      "item": [
+        {
+          "name": "Franchise not found (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Error code FRANCHISE_NOT_FOUND', () => pm.expect(pm.response.json().code).to.eql('FRANCHISE_NOT_FOUND'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Does not matter\"\n}" },
+            "url": "{{baseUrl}}/api/v1/franchises/non-existing-id/name",
+            "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Branch not found (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Error code BRANCH_NOT_FOUND', () => pm.expect(pm.response.json().code).to.eql('BRANCH_NOT_FOUND'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Does not matter\"\n}" },
+            "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches/non-existing-id/name",
+            "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Blank name (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Error code INVALID_NAME', () => pm.expect(pm.response.json().code).to.eql('INVALID_NAME'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"\"\n}" },
+                        "url": "{{baseUrl}}/api/v1/franchises",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Negative stock (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Error code INVALID_STOCK', () => pm.expect(pm.response.json().code).to.eql('INVALID_STOCK'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "body": { "mode": "raw", "raw": "{\n  \"stock\": -1\n}" },
+                        "url": "{{baseUrl}}/api/v1/franchises/{{franchiseId}}/branches/{{branchId}}/products/{{productId}}/stock",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        },
+        {
+          "name": "Malformed body (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Error code INVALID_REQUEST_BODY', () => pm.expect(pm.response.json().code).to.eql('INVALID_REQUEST_BODY'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": { "mode": "raw", "raw": "{ not valid json" },
+                        "url": "{{baseUrl}}/api/v1/franchises",
+                        "header": [{ "key": "Host", "value": "{{albHost}}" }]
+          }
+        }
+      ]
+    }
+  ]
+}
