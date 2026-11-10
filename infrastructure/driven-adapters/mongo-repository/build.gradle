@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(':model')
+
+    implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+
+    implementation "io.github.resilience4j:resilience4j-reactor:${resilience4jVersion}"
+    implementation "io.github.resilience4j:resilience4j-circuitbreaker:${resilience4jVersion}"
+    implementation "io.github.resilience4j:resilience4j-retry:${resilience4jVersion}"
+    implementation "io.github.resilience4j:resilience4j-timelimiter:${resilience4jVersion}"
+}
