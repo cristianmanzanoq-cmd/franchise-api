@@ -150,7 +150,7 @@ Estrategia de pruebas:
 
 * Módulo `usecase`: pruebas unitarias de escenarios de negocio con JUnit 5 + Mockito + **StepVerifier** (caminos felices, fallos de validación, recursos no encontrados, verificación de pertenencia entre franquicias).
 * Módulo `reactive-web`: pruebas de integración de router + handler + filtro de errores con **WebTestClient** enlazado al `RouterFunction` real.
-* Módulo `mongo-repository`: pruebas de mapeo del adaptador y una prueba del comportamiento de reintentos usando registros reales de Resilience4j.
+* Módulo `mongo-repository`: pruebas de los tres adaptadores con **StepVerifier** y pruebas de `MongoResilience` con registros reales de Resilience4j (reintento con backoff, timeout sin reintento y apertura del circuit breaker).
 
 ## Docker
 
@@ -328,7 +328,7 @@ Todas las operaciones sobre MongoDB pasan por `MongoResilience`, que aplica el p
 | Patrón | Implementación | Configuración |
 |--------|----------------|---------------|
 | Timeout | `TimeLimiterOperator` de Resilience4j | 3 s por operación |
-| Retry | `RetryOperator` de Resilience4j | 3 intentos, backoff exponencial (200 ms x2) |
+| Retry | `RetryOperator` de Resilience4j | 3 intentos, backoff exponencial (200 ms x2), solo ante fallos transitorios de conexión (`MongoSocketException`, `TransientDataAccessException`). Un timeout **no** se reintenta, para que el tiempo máximo de respuesta siga siendo el del TimeLimiter |
 | Circuit Breaker | `CircuitBreakerOperator` de Resilience4j | se abre con 50 % de fallos sobre 10 llamadas, pasa a half-open tras 10 s |
 | Backpressure | Nativo en WebFlux/Reactor | Señalización de demanda `request(n)` de Reactive Streams de extremo a extremo |
 

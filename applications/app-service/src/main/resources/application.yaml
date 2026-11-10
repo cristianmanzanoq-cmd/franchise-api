@@ -45,7 +45,6 @@ resilience4j:
         enableExponentialBackoff: true
         exponentialBackoffMultiplier: 2
         retryExceptions:
-          - java.util.concurrent.TimeoutException
           - org.springframework.dao.TransientDataAccessException
           - com.mongodb.MongoSocketException
   timelimiter:
