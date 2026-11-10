@@ -255,6 +255,35 @@ aws --endpoint-url http://localhost:4566 ecs update-service \
 
 Las tareas de ECS se arrancan solo si la imagen existe en el daemon Docker del host. Por eso `environments/dev.tfvars` define `container_image_override = "localhost:4566/franchise-api-dev:latest"` en lugar de la URI de ECR que devuelve `ecr_repository_url`. Si cambias el tag, actualiza ese valor.
 
+#### Alternativa si no puedes descargar la imagen base
+
+El `Dockerfile` usa `eclipse-temurin:17-jre-alpine` de Docker Hub. Si la descarga falla (por ejemplo, por una red que bloquea Docker Hub), compila el JAR en el host y empaquétalo sobre una imagen con JDK 17 que ya tengas local:
+
+```bash
+# 1. Compilar el JAR (requiere JDK 17 instalado en el host)
+./gradlew :app-service:bootJar
+
+# 2. Ver qué imágenes con JDK 17 ya tienes local
+docker images | grep -E "temurin|jdk17|openjdk"
+
+# 3. En una carpeta temporal FUERA del repositorio, crear un Dockerfile mínimo
+mkdir -p /tmp/franchise-image && cd /tmp/franchise-image
+cp <ruta-del-repo>/applications/app-service/build/libs/franchise-api.jar .
+cat > Dockerfile <<'EOF'
+FROM gradle:8.7-jdk17-alpine
+WORKDIR /app
+COPY franchise-api.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
+EOF
+
+# 4. Construir la imagen y continuar con el mismo flujo de este paso
+docker build -t franchise-api:local .
+```
+
+Reemplaza `gradle:8.7-jdk17-alpine` por la imagen con JDK 17 que aparezca en el paso 2. Esta alternativa omite el usuario no root del `Dockerfile` del repositorio, así que es solo para ambientes de prueba.
+
+
 ### 6. Verificar
 
 ```bash
