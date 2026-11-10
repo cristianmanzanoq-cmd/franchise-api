@@ -1,0 +1,12 @@
+dependencies {
+    implementation project(':model')
+    implementation project(':usecase')
+
+    implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:${springdocVersion}"
+    implementation "io.github.resilience4j:resilience4j-circuitbreaker:${resilience4jVersion}"
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
