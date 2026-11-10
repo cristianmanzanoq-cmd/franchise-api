@@ -1,0 +1,32 @@
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: franchise-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  franchise-api:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile
+    container_name: franchise-api
+    depends_on:
+      - mongo
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/franchises
+    ports:
+      - "8080:8080"
+
+  ministack:
+    image: ministackorg/ministack:latest
+    container_name: ministack
+    ports:
+      - "4566:4566"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  mongo-data:
