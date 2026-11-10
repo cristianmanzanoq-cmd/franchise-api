@@ -9,9 +9,6 @@ build/
 .classpath
 .project
 
-# Postman (VS Code extension local data)
-.postman/
-
 .DS_Store
 Thumbs.db
 
