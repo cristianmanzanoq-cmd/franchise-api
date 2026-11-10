@@ -1,0 +1,6 @@
+dependencies {
+    implementation project(':model')
+
+    implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
+    implementation 'io.projectreactor:reactor-core'
+}
