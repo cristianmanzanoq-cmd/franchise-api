@@ -22,5 +22,5 @@ Thumbs.db
 
 *.log
 
-# Personal study notes, not versioned
+# Docs
 docs/ministack-deployment-guide.md
