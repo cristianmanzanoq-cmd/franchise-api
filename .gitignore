@@ -19,6 +19,8 @@ Thumbs.db
 *.tfstate
 *.tfstate.*
 *.tfvars.local
-.terraform.lock.hcl
 
 *.log
+
+# Personal study notes, not versioned
+docs/ministack-deployment-guide.md
