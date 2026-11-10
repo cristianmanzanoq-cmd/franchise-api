@@ -1,7 +1,6 @@
 package co.com.nequi.franchise.api.handler;
 
 import co.com.nequi.franchise.api.dto.CreateProductRequest;
-import co.com.nequi.franchise.api.dto.TopStockProductResponse;
 import co.com.nequi.franchise.api.dto.UpdateNameRequest;
 import co.com.nequi.franchise.api.dto.UpdateStockRequest;
 import co.com.nequi.franchise.api.mapper.ApiMapper;
@@ -73,10 +72,11 @@ public class ProductHandler {
     }
 
     public Mono<ServerResponse> findTopStockProducts(ServerRequest request) {
-        return ServerResponse.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(productUseCase.findTopStockProductsByFranchise(
-                                request.pathVariable("franchiseId"))
-                        .map(ApiMapper::toResponse), TopStockProductResponse.class);
+        return productUseCase.findTopStockProductsByFranchise(request.pathVariable("franchiseId"))
+                .map(ApiMapper::toResponse)
+                .collectList()
+                .flatMap(response -> ServerResponse.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(response));
     }
 }
